@@ -199,16 +199,34 @@ LNP staff are the primary insider-threat surface. The protocol assumes any staff
 
 ---
 
-## 6. What This Solves That Existing Networks Don't
+## 6. Prior Art and Differentiation
 
-| Concern | DHL Packstation | Hermes ParcelShop | Amazon Hub | LNP |
-|---|---|---|---|---|
-| Carrier neutrality | DHL only | Hermes only | Amazon only | Multi-carrier |
-| Reservation guarantee at checkout | None | None | None | Yes (via API) |
-| Atomic settlement on pickup | No | Manual | No | Yes (Pay-to-Unlock) |
-| Live exception handling | No (unmanned) | Variable (host shop) | No (unmanned) | Yes (two-shift staff) |
-| Audit footage on dispute | No | No | No | Yes |
-| In-store open-box area | No | No | No | Yes |
+LNP's individual building blocks are not novel — each has been deployed at scale somewhere. The thesis is that the specific *combination*, in Germany, is an unfilled niche.
+
+### Closest networks
+
+| Network | Carrier-neutral | API reservation | Atomic Pay-to-Unlock | Dedicated staff | Status |
+|---|---|---|---|---|---|
+| DHL Packstation (DE) | DHL-only | None | No | None | ~13k DE; market default |
+| Hermes ParcelShop (DE) | Hermes-only | None | Manual COD | Host-shop | ~17k DE; quality variable |
+| Amazon Hub Counter (DE) | Amazon-only | Yes | No | Host-shop | ~10k DE |
+| InPost (PL &rarr; DE) | Partial (third-party API) | Yes | COD only | None | ~25k PL; ~7k DE rollout 2024&ndash;26 |
+| Doddle (UK) | Yes | Yes | No | Full-time dedicated | Pivoted to SaaS in 2020 after consumer P&amp;L failed |
+| Hive Box / 丰巢 (CN) | Limited | Yes | Yes (some hubs) | Hybrid concierge | 2024 IPO; loss-making for years |
+| **LNP** (proposed) | Yes | Yes | Yes | Yes (two-shift) | Concept stage |
+
+### Combination not yet deployed in Germany
+
+- **Atomic Pay-to-Unlock + carrier-neutral + dedicated staffed hub + KassenSichV / GwG-compliant cash handling** — no single existing network combines all four.
+- **Sandbox open-box area with explicit storefront-threshold finality SOP** — most staffed networks blur this line, which inflates dispute-handling cost.
+- **Audit-footage-as-evidence with no LNP arbitration** — see §§ 3 (Dispute handling) and 5.
+- **P2P resale escrow** (e.g. Kleinanzeigen, Vinted) as a first-class use case rather than an afterthought.
+
+### Honest caveats
+
+- **Doddle's 2020 pivot is the most informative cautionary precedent.** £90M+ in funding, exclusive UK rail-station footprint, and still could not make dedicated-staffed consumer P&amp;L work. Any LNP business plan that does not engage with Doddle's failure modes is incomplete.
+- **InPost's DE rollout** (≈7,000 lockers by 2025–26) creates negative network-effect pressure on any staffed entrant arriving after them.
+- **Capital intensity** — staffed hubs with smart safes, automated lockers, and CCTV require substantially more per-site capex than InPost's unmanned model. Single-store unit economics must be validated before scaling.
 
 ---
 
