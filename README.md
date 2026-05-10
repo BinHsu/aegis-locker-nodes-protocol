@@ -48,6 +48,8 @@ LNP defines a contract between **carriers**, **e-commerce platforms**, and **end
 ### C. Settlement Layer
 
 - **No client funds held by LNP.** All payment flows (cash-on-delivery, card, mobile wallet) are processed via licensed PSP partners (e.g. Stripe / Mollie / Adyen / Solarisbank BaaS). LNP receives only its own slot fee and overdue penalty.
+- **Cash payment** is accepted only via certified smart-safe modules (TSE-compliant per KassenSichV) integrated with a banking partner's online-Gutschrift facility. Physical cash custody transfers to the banking partner at the moment of deposit; LNP staff never handle cash, and CIT (cash-in-transit) pickup is managed by the banking partner.
+- **Cash transaction cap** — €999 per parcel for cash-on-delivery, to stay below GwG (Geldwäschegesetz / Anti-Money-Laundering Act) § 10 identity-verification thresholds. Higher-value parcels require card or mobile-wallet payment.
 - **Progressive pricing** (per reservation, per slot):
 
   ```
