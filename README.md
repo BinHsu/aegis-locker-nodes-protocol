@@ -32,6 +32,46 @@ LNP defines a contract between **carriers**, **e-commerce platforms**, and **end
 
 ## 2. Architecture
 
+```mermaid
+flowchart TB
+    Carrier[Carriers<br/>DHL / Hermes / DPD / Amazon]
+    ECom[E-commerce<br/>Platforms]
+    User[End User]
+
+    subgraph LNP_Site["LNP Site - staffed 08:00-20:00"]
+      Terminal[Scan and Pay Terminal]
+      Lockers[Automated Locker Bank]
+      OpenBox[Open-Box Sandbox]
+      SmartSafe[Smart Safe<br/>cash + TSE]
+      CCTV[CCTV<br/>ring buffer 24h]
+    end
+
+    subgraph LNP_Backend["LNP Backend"]
+      SchedAPI[Resource Scheduler API]
+      AuditAPI[Audit Trail API]
+      UnlockCtrl[Pay-to-Unlock Controller]
+    end
+
+    subgraph External_Settlement["External Settlement"]
+      PSP[Licensed PSP<br/>Stripe / Solarisbank]
+      Bank[Banking Partner<br/>online-Gutschrift]
+    end
+
+    ECom -->|1 reserve slot| SchedAPI
+    SchedAPI -->|allocate| Lockers
+    Carrier -->|2 scan-in| Terminal
+    User -->|3 QR + pay| Terminal
+    Terminal -->|card / wallet| PSP
+    Terminal -->|cash| SmartSafe
+    SmartSafe -->|instant credit| Bank
+    PSP -->|webhook| UnlockCtrl
+    Bank -->|webhook| UnlockCtrl
+    UnlockCtrl -->|unlock| Lockers
+    CCTV --> AuditAPI
+    AuditAPI -.on dispute.-> ECom
+    AuditAPI -.on dispute.-> User
+```
+
 ### A. Physical Layer
 
 - **Two-shift staffed operation** 08:00–20:00. Staff handle exception cases (oversized parcels, hardware faults, bulk drop-off receipt) and floor maintenance. Staff do not handle cash or cards.
@@ -50,6 +90,19 @@ LNP defines a contract between **carriers**, **e-commerce platforms**, and **end
 - **No client funds held by LNP.** All payment flows (cash-on-delivery, card, mobile wallet) are processed via licensed PSP partners (e.g. Stripe / Mollie / Adyen / Solarisbank BaaS). LNP receives only its own slot fee and overdue penalty.
 - **Cash payment** is accepted only via certified smart-safe modules (TSE-compliant per KassenSichV) integrated with a banking partner's online-Gutschrift facility. Physical cash custody transfers to the banking partner at the moment of deposit; LNP staff never handle cash, and CIT (cash-in-transit) pickup is managed by the banking partner.
 - **Cash transaction cap** — €999 per parcel for cash-on-delivery, to stay below GwG (Geldwäschegesetz / Anti-Money-Laundering Act) § 10 identity-verification thresholds. Higher-value parcels require card or mobile-wallet payment.
+
+```mermaid
+flowchart LR
+    User([User]) -->|insert cash| SS[Smart Safe<br/>Glory / CashGuard]
+    SS -->|TSE-signed log| TSE[(KassenSichV<br/>tamper-proof log)]
+    SS -->|electronic count| BankAPI[Banking Partner API]
+    BankAPI -->|online-Gutschrift| Escrow[(PSP Escrow<br/>account)]
+    Escrow -->|split| Slot[LNP Slot Fee]
+    Escrow -->|split| Merchant[E-commerce / Seller<br/>parcel value]
+    SS -.weekly.-> CIT[CIT Pickup<br/>Loomis / Brink's]
+    CIT -.physical.-> BankVault[Bank Vault]
+```
+
 - **Progressive pricing** (per reservation, per slot):
 
   ```
@@ -82,6 +135,35 @@ LNP defines a contract between **carriers**, **e-commerce platforms**, and **end
 4. On payment confirmation, the locker unlocks. **This is atomic** — payment success is the sole and necessary trigger for physical unlock.
 5. User may use the in-store open-box area. All activity is recorded.
 6. **Once the user crosses the storefront threshold, the transaction is final.** Re-entry to claim post-hoc disputes is out of scope.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Term as LNP Terminal
+    participant PSP as PSP / Bank
+    participant Ctrl as Unlock Controller
+    participant Lkr as Locker
+
+    User->>Term: Present QR token
+    Term->>Term: Validate against reservation
+    alt token invalid
+        Term-->>User: Reject
+    else token valid
+        Term->>User: Show amount due
+        User->>Term: Pay (card / cash / wallet)
+        Term->>PSP: Authorise payment
+        PSP-->>Term: Auth response
+        alt payment failed
+            Term-->>User: Retry / cancel
+        else payment confirmed
+            PSP->>Ctrl: Webhook payment_succeeded
+            Ctrl->>Lkr: Unlock signal
+            Lkr-->>User: Door opens
+            Note over PSP,Lkr: Atomic - unlock only fires<br/>on confirmed payment
+        end
+    end
+```
 
 ### Dispute handling
 
