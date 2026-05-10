@@ -4,3 +4,6 @@
 .vscode/
 .idea/
 *.log
+
+# Local-only design notes
+backlog.md
